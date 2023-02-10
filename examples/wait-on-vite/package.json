@@ -13,6 +13,6 @@
   "private": true,
   "devDependencies": {
     "cypress": "12.4.1",
-    "vite": "^2.0.0-beta.65"
+    "vite": "^2.9.13"
   }
 }
