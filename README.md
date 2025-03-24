@@ -1,10 +1,10 @@
 # cypress-io/github-action [![Action status][ci-badge]][ci-workflow] [![cypress][cloud-badge]][cloud-project] [![renovate-app badge][renovate-badge]][renovate-bot]
 
- > [GitHub Action](https://docs.github.com/en/actions) for running [Cypress](https://www.cypress.io) end-to-end and component tests. Includes npm, pnpm and Yarn installation, custom caching and lots of configuration options.
+> [GitHub Action](https://docs.github.com/en/actions) for running [Cypress](https://www.cypress.io) end-to-end and component tests. Includes npm, pnpm and Yarn installation, custom caching and lots of configuration options.
 
- Placing `use: cypress-io/github-action@v6` into a GitHub Action workflow gives you a simple way to run Cypress. The action takes the project's npm, pnpm or Yarn package manager lock file, installs dependencies and caches these dependencies for future use. It then proceeds to run Cypress end-to-end tests with the built-in Electron browser and provides a test summary after completion.
+Placing `use: cypress-io/github-action@v6` into a GitHub Action workflow gives you a simple way to run Cypress. The action takes the project's npm, pnpm or Yarn package manager lock file and installs dependencies with [caching](#caching). It then proceeds to run Cypress end-to-end tests with the built-in Electron browser and provides a test summary after completion.
 
- If you are testing against a running server like the [Cypress Kitchen Sink showcase example](https://example.cypress.io/) on https://example.cypress.io/ no other parameters are necessary. In other cases where you need to fire up a development server, you can add the [start](#start-server) parameter to the workflow. Browse through the examples to find other useful parameters.
+If you are testing against a running server like the [Cypress Kitchen Sink showcase example](https://example.cypress.io/) on https://example.cypress.io/ no other parameters are necessary. In other cases where you need to fire up a development server, you can add the [start](#start-server) parameter to the workflow. Browse through the examples to find other useful parameters.
 
 ## Examples
 
@@ -452,9 +452,11 @@ Please refer to the [default GitHub environment variables](https://docs.github.c
 When recording runs to Cypress Cloud, the PR number and URL can be automatically detected if you pass `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`
 via the workflow `env`. When set, this value enables the Action to perform additional logic that grabs the related PR number and URL (if they
 exist) and sets them in the environment variables `CYPRESS_PULL_REQUEST_ID` and `CYPRESS_PULL_REQUEST_URL`, respectively.
-* See Cypress' documentation on [CI Build Information](https://on.cypress.io/guides/continuous-integration/introduction#CI-Build-Information)
+
+- See Cypress' documentation on [CI Build Information](https://on.cypress.io/guides/continuous-integration/introduction#CI-Build-Information)
 
 Example workflow using the variables:
+
 ```yml
 name: Example echo PR number and URL
 on: push
@@ -571,7 +573,6 @@ jobs:
     runs-on: ubuntu-24.04
     name: E2E
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -736,6 +737,7 @@ The Cypress GH Action does not spawn or create any additional containers - it on
 If you use the GitHub Actions facility for [Re-running workflows and jobs](https://docs.github.com/en/actions/managing-workflow-runs/re-running-workflows-and-jobs), note that [Re-running failed jobs in a workflow](https://docs.github.com/en/actions/managing-workflow-runs/re-running-workflows-and-jobs?tool=webui#re-running-failed-jobs-in-a-workflow) is not suited for use with parallel recording into Cypress Cloud. Re-running failed jobs in this situation does not simply re-run failed Cypress tests. Instead it re-runs **all** Cypress tests, load-balanced over the containers with failed jobs.
 
 To optimize runs when there are failing tests present, refer to optional [Cypress Cloud Smart Orchestration](https://docs.cypress.io/cloud/features/smart-orchestration/overview/) Premium features:
+
 - [Spec Prioritization](https://docs.cypress.io/cloud/features/smart-orchestration/spec-prioritization)
 - [Auto Cancellation](https://docs.cypress.io/guides/cloud/smart-orchestration/run-cancellation). See also [Specify auto cancel after failures](#specify-auto-cancel-after-failures) for details of how to set this option in a Cypress GH Action workflow.
 
@@ -796,6 +798,7 @@ jobs:
         with:
           start: npm start
 ```
+
 **Caution:** use the `start` parameter only to start a server, not to run Cypress, otherwise tests may be run twice. The action runs Cypress tests by default, unless the parameter `runTests` is set to `false`.
 
 **Note:** sometimes on Windows you need to run a different start command. You can use the `start-windows` parameter for this.
@@ -887,8 +890,6 @@ By default, `wait-on` will retry for 60 seconds. You can pass a custom timeout i
     # wait for 2 minutes for the server to respond
     wait-on-timeout: 120
 ```
-
-
 
 You can wait for multiple URLs to respond by separating urls with a comma
 
@@ -1064,7 +1065,7 @@ repo/
   package-lock.json
 ```
 
- We use `working-directory: app-test` to match the above example directory structure:
+We use `working-directory: app-test` to match the above example directory structure:
 
 ```yml
 on: push
@@ -1128,7 +1129,7 @@ jobs:
 
 The package manager `pnpm` is not pre-installed in [GitHub Actions runner images](https://github.com/actions/runner-images) (unlike `npm` and `yarn`) and so it must be installed in a separate workflow step (see below). If the action finds a `pnpm-lock.yaml` file, it uses the [pnpm](https://pnpm.io/cli/install) command `pnpm install --frozen-lockfile` by default to install dependencies.
 
-The example below follows [pnpm recommendations](https://pnpm.io/continuous-integration#github-actions) for installing pnpm and caching the [pnpm store](https://pnpm.io/cli/store).
+The example below follows [pnpm recommendations](https://pnpm.io/continuous-integration#github-actions) for installing pnpm and caching the [pnpm store](https://pnpm.io/cli/store). Add [side-effects-cache=false](https://pnpm.io/npmrc#side-effects-cache) to an `.npmrc` file in your project to allow pnpm to install the Cypress binary even if the Cypress npm module has been cached by pnpm.
 
 ```yaml
 name: example-basic-pnpm
@@ -1204,7 +1205,9 @@ jobs:
 
 ### Yarn Modern
 
-To install dependencies using a `yarn.lock` file from [Yarn Modern](https://yarnpkg.com/) (Yarn 2 and later) you need to override the default [Yarn 1 (Classic)](https://classic.yarnpkg.com/) installation command `yarn --frozen-lockfile`. You can do this by using the `install-command` parameter and specifying `yarn install` for example:
+To install dependencies using a `yarn.lock` file from [Yarn Modern](https://yarnpkg.com/) (Yarn 2 and later) you need to override the default [Yarn 1 (Classic)](https://classic.yarnpkg.com/) installation command `yarn --frozen-lockfile`. You can do this by using the `install-command` parameter and specifying `yarn install` as in the example below.
+
+The action supports built-in caching of Yarn Classic dependencies only. To cache Yarn Modern dependencies additionally use [actions/setup-node](https://github.com/actions/setup-node) and specify `cache: yarn`.
 
 ```yaml
 name: example-yarn-modern
@@ -1215,6 +1218,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - run: corepack enable # (experimental and optional)
+      - name: Set up Yarn cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: examples/yarn-modern/yarn.lock
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
@@ -1230,6 +1240,8 @@ This example covers the [`.yarnrc.yml`](https://yarnpkg.com/configuration/yarnrc
 ### Yarn Plug'n'Play
 
 When using [Yarn Modern](https://yarnpkg.com/) (Yarn 2 and later) with [Plug'n'Play](https://yarnpkg.com/features/pnp) enabled, you will need to use the `command` parameter to run [`yarn`](https://yarnpkg.com/cli/run) instead of [`npx`](https://docs.npmjs.com/cli/v9/commands/npx).
+
+See the above [Yarn Modern](#yarn-modern) section for information on caching Yarn Modern dependencies.
 
 ```yaml
 name: example-yarn-modern-pnp
@@ -1413,15 +1425,13 @@ jobs:
 
 ### More examples
 
-<!-- prettier-ignore-start -->
-| Name                                                                                                    | Description                                                                               |
-| ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| [cypress-io/cypress-example-kitchensink](https://github.com/cypress-io/cypress-example-kitchensink)     | Runs every API command in Cypress using various CI platforms including GitHub Actions     |
-| [cypress-io/cypress-realworld-app](https://github.com/cypress-io/cypress-realworld-app)                 | A real-world example payment application. Uses GitHub Actions and CircleCI.               |
-| [cypress-gh-action-monorepo](https://github.com/bahmutov/cypress-gh-action-monorepo)                    | Splits install and running tests commands, runs Cypress from sub-folder                   |
-| [cypress-examples](https://github.com/bahmutov/cypress-examples)                                        | Shows separate install job from parallel test jobs                                        |
-| [cypress-gh-action-split-jobs](https://github.com/bahmutov/cypress-gh-action-split-jobs)                | Shows a separate install job with the build step, and another job that runs the tests     |
-<!-- prettier-ignore-end -->
+| Name                                                                                                | Description                                                                           |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [cypress-io/cypress-example-kitchensink](https://github.com/cypress-io/cypress-example-kitchensink) | Runs every API command in Cypress using various CI platforms including GitHub Actions |
+| [cypress-io/cypress-realworld-app](https://github.com/cypress-io/cypress-realworld-app)             | A real-world example payment application. Uses GitHub Actions and CircleCI.           |
+| [cypress-gh-action-monorepo](https://github.com/bahmutov/cypress-gh-action-monorepo)                | Splits install and running tests commands, runs Cypress from sub-folder               |
+| [cypress-examples](https://github.com/bahmutov/cypress-examples)                                    | Shows separate install job from parallel test jobs                                    |
+| [cypress-gh-action-split-jobs](https://github.com/bahmutov/cypress-gh-action-split-jobs)            | Shows a separate install job with the build step, and another job that runs the tests |
 
 ## Notes
 
@@ -1429,13 +1439,36 @@ jobs:
 
 This action installs local dependencies using lock files. Ensure that exactly one type of lock file is used for each project or working-directory from the following supported package managers:
 
- | Lock file           | Package Manager                                                                                  | Installation command             |
- | ------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------- |
- | `package-lock.json` | [npm](https://docs.npmjs.com/cli/v9/commands/npm-ci)                                             | `npm ci`                         |
- | `pnpm-lock.yaml`    | [pnpm](https://pnpm.io/cli/install#--frozen-lockfile)                                            | `pnpm install --frozen-lockfile` |
- | `yarn.lock`         | [Yarn Classic](https://classic.yarnpkg.com/en/docs/cli/install#toc-yarn-install-frozen-lockfile) | `yarn --frozen-lockfile`         |
+| Lock file           | Package Manager                                                                                  | Installation command             |
+| ------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `package-lock.json` | [npm](https://docs.npmjs.com/cli/v9/commands/npm-ci)                                             | `npm ci`                         |
+| `pnpm-lock.yaml`    | [pnpm](https://pnpm.io/cli/install#--frozen-lockfile)                                            | `pnpm install --frozen-lockfile` |
+| `yarn.lock`         | [Yarn Classic](https://classic.yarnpkg.com/en/docs/cli/install#toc-yarn-install-frozen-lockfile) | `yarn --frozen-lockfile`         |
 
 See section [Yarn Modern](#yarn-modern) for information about using Yarn version 2 and later.
+
+### Caching
+
+When the action installs dependencies, it also caches these where possible using GitHub Actions [@actions/cache](https://github.com/actions/toolkit/tree/main/packages/cache).
+
+#### Cypress binary cache
+
+The Cypress binary is saved to the `$HOME/.cache/Cypress` directory or to a location defined by the environment variable `CYPRESS_CACHE_FOLDER`. This location is then cached by GitHub Actions and carries the cache label `cypress-<platform-and-architecture>-hash`.
+
+#### Package Manager cache
+
+Based on the package manager lock file, the action caches the following package manager cache locations:
+
+| Lock file           | Package Manager                                                     | Cached location     |
+| ------------------- | ------------------------------------------------------------------- | ------------------- |
+| `package-lock.json` | [npm](https://docs.npmjs.com/cli/commands/npm-cache)                | `$HOME/.npm`        |
+| `yarn.lock`         | [Yarn Classic](https://classic.yarnpkg.com/lang/en/docs/cli/cache/) | `$HOME/.cache/yarn` |
+
+The cache carries the label `npm-<platform-and-architecture>-hash`.
+In the cache label, `npm` refers to the npm public registry at https://registry.npmjs.org from which both the above package managers download npm modules by default.
+
+Note that the Cypress GitHub action does not include any built-in caching for pnpm and Yarn Modern.
+GitHub Actions however provides [actions/setup-node](https://github.com/actions/setup-node) which includes functionality to optionally cache npm, Yarn and pnpm dependencies. This can be added to any GitHub Actions workflow if needed. Examples are shown above for [pnpm](#pnpm) and [Yarn Modern](#yarn-modern).
 
 ## Debugging
 
@@ -1514,7 +1547,7 @@ If you configure a `workflow_dispatch` event in your own workflows, you will be 
 
 ### Outputs
 
-This action sets a GitHub step output `resultsUrl` if the run was recorded on [Cypress Cloud](https://on.cypress.io/cloud-introduction) using the action parameter setting `record: true` (see [Record test results on Cypress Cloud](#record-test-results-on-cypress-cloud)). Note that using a [Custom test command](#custom-test-command) with the `command` parameter overrides the `record` parameter and in this case no `resultsUrl` step output is saved.
+This action sets a GitHub step output `resultsUrl` if the run was recorded on [Cypress Cloud](https://on.cypress.io/cloud-introduction) using the action parameter setting `record: true` (see [Record test results on Cypress Cloud](#record-test-results-on-cypress-cloud)). Note that if a custom test command with the [command](#custom-test-command) option or the [command-prefix](#command-prefix) option are used then no `resultsUrl` step output is saved.
 
 This is an example of using the step output `resultsUrl`:
 
@@ -1697,6 +1730,7 @@ Please see our [Contributing Guideline](./CONTRIBUTING.md) which explains how to
 This project is licensed under the terms of the [MIT license][license-file].
 
 <!-- badge links follow -->
+
 [ci-badge]: https://github.com/cypress-io/github-action/actions/workflows/main.yml/badge.svg
 [ci-workflow]: https://github.com/cypress-io/github-action/actions/workflows/main.yml
 [cloud-badge]: https://img.shields.io/endpoint?url=https://cloud.cypress.io/badge/simple/3tb7jn/master&style=flat&logo=cypress

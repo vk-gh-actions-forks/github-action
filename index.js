@@ -438,6 +438,7 @@ const I = (x) => x
 
 const detectPrNumber = async () => {
   const {
+    GITHUB_API_URL,
     GITHUB_SHA,
     GITHUB_TOKEN,
     GITHUB_RUN_ID,
@@ -463,7 +464,8 @@ const detectPrNumber = async () => {
     )
 
     const client = new Octokit({
-      auth: GITHUB_TOKEN
+      auth: GITHUB_TOKEN,
+      baseUrl: GITHUB_API_URL
     })
 
     if (GITHUB_HEAD_REF) {
@@ -520,7 +522,8 @@ const getCiBuildId = async () => {
     GITHUB_SHA,
     GITHUB_TOKEN,
     GITHUB_RUN_ID,
-    GITHUB_REPOSITORY
+    GITHUB_REPOSITORY,
+    GITHUB_API_URL
   } = process.env
 
   const [owner, repo] = GITHUB_REPOSITORY.split('/')
@@ -533,7 +536,8 @@ const getCiBuildId = async () => {
     )
 
     const client = new Octokit({
-      auth: GITHUB_TOKEN
+      auth: GITHUB_TOKEN,
+      baseUrl: GITHUB_API_URL
     })
 
     const resp = await client.request(
@@ -899,7 +903,7 @@ const generateSummary = async (testResults) => {
     `${testResults.totalFailed}`,
     `${testResults.totalPending}`,
     `${testResults.totalSkipped}`,
-    `${testResults.totalDuration / 1000}s` || ''
+    `${(testResults.totalDuration || 0) / 1000}s`
   ]
 
   const summaryTitle = core.getInput('summary-title')
