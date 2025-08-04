@@ -1,10 +1,28 @@
 # cypress-io/github-action [![Action status][ci-badge]][ci-workflow] [![cypress][cloud-badge]][cloud-project] [![renovate-app badge][renovate-badge]][renovate-bot]
 
-> [GitHub Action](https://docs.github.com/en/actions) for running [Cypress](https://www.cypress.io) end-to-end and component tests. Includes npm, pnpm and Yarn installation, custom caching and lots of configuration options.
+> [Cypress](https://www.cypress.io) based `cypress-io/github-action` runs [End-to-End](#end-to-end-testing) or [Component](#component-testing) tests in [GitHub Actions](https://docs.github.com/en/actions/) Continuous Integration (CI) workflows, optionally [recording](#record-test-results-on-cypress-cloud) to [Cypress Cloud](https://on.cypress.io/cloud-introduction)
 
-Placing `use: cypress-io/github-action@v6` into a GitHub Action workflow gives you a simple way to run Cypress. The action takes the project's npm, pnpm or Yarn package manager lock file and installs dependencies with [caching](#caching). It then proceeds to run Cypress end-to-end tests with the built-in Electron browser and provides a test summary after completion.
+## Introduction
 
-If you are testing against a running server like the [Cypress Kitchen Sink showcase example](https://example.cypress.io/) on https://example.cypress.io/ no other parameters are necessary. In other cases where you need to fire up a development server, you can add the [start](#start-server) parameter to the workflow. Browse through the examples to find other useful parameters.
+In addition to running Cypress tests, the action includes [dependency installation](#installation), [caching](#caching) and more:
+
+| Function                                                                                                                                                                                                                                  | Benefits                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Single-line call](#end-to-end-testing)                                                                                                                                                                                                   | Simplified use by installing dependencies and running Cypress in one line of workflow code                                                                                                                                              |
+| [Build app](#build-app), [Start server](#start-server) and [Wait for server](#wait-on) options                                                                                                                                            | Convenience of app, server and test coordination                                                                                                                                                                                        |
+| [cypress run](https://docs.cypress.io/app/references/command-line#cypress-run) CLI type options                                                                                                                                           | Improved readability with vertically listed workflow options                                                                                                                                                                            |
+| [Dependency installation](#installation) based on [npm](https://docs.npmjs.com/cli/configuring-npm/package-lock-json), [pnpm](https://pnpm.io/git#lockfiles) and [Yarn Classic](https://classic.yarnpkg.com/en/docs/yarn-lock) lock files | Reduced command complexity                                                                                                                                                                                                              |
+| [Caching](#caching) of Cypress binary and dependencies for [npm](https://docs.npmjs.com/cli/commands/npm-cache) and [Yarn Classic](https://classic.yarnpkg.com/lang/en/docs/cli/cache/) installations                                     | Reduced download bandwidth requirements                                                                                                                                                                                                 |
+| [Job summary](#job-summary-title)                                                                                                                                                                                                         | Fast access to results overview                                                                                                                                                                                                         |
+| [Docker](#docker-image) compatibility                                                                                                                                                                                                     | Improved independence from [GitHub-hosted runner image](https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners) version changes. Fixed Docker environments can be used. |
+| [Recording](#record-test-results-on-cypress-cloud) to Cypress Cloud compatibility including [parallel](#parallel) execution                                                                                                               | Improved interpretation of test results through [Cypress Cloud](https://on.cypress.io/cloud-introduction)                                                                                                                               |
+| [Live examples](#examples)                                                                                                                                                                                                                | Speeds up introduction and troubleshooting                                                                                                                                                                                              |
+| [Yarn Modern](#yarn-modern) usage and cache examples                                                                                                                                                                                      | Extends usage beyond [Yarn Classic](https://classic.yarnpkg.com/)                                                                                                                                                                       |
+| [pnpm cache examples](#pnpm)                                                                                                                                                                                                              | Reduced download bandwidth requirements for [pnpm](https://pnpm.io/)                                                                                                                                                                    |
+| [Debug](#debugging) enabled                                                                                                                                                                                                               | Improved workflow troubleshooting                                                                                                                                                                                                       |
+| [Ping utility](#debugging-waiting-for-url-to-respond)                                                                                                                                                                                     | Improved server reachability troubleshooting                                                                                                                                                                                            |
+
+The following examples demonstrate the actions' functions.
 
 ## Examples
 
@@ -13,6 +31,7 @@ If you are testing against a running server like the [Cypress Kitchen Sink showc
 - Select [action version](#action-version)
 - Run tests in a given [browser](#browser)
   - using [Chrome](#chrome)
+  - using [Chrome for Testing](#chrome-for-testing)
   - using [Firefox](#firefox)
   - using [Edge](#edge)
   - using [headed mode](#headed)
@@ -21,12 +40,11 @@ If you are testing against a running server like the [Cypress Kitchen Sink showc
 - Run only some [spec files](#specs)
 - Test [project in subfolder](#project)
 - [Record results](#record-test-results-on-cypress-cloud) on Cypress Cloud
-  - Storing the [Project ID and Record Key](#project-id-and-record-key)
   - Getting [Git information](#git-information) environment variables
   - Getting [PR and URL](#automatic-pr-number-and-url-detection) automatically
   - Overwriting [Merge SHA into SHA](#merge-sha-into-sha) message
 - Tag [recordings](#tag-recordings)
-- Specify [auto cancel](#specify-auto-cancel-after-failures) after failures
+- Specify [auto cancel](#auto-cancel-after-failures) after failures
 - Store [test artifacts](#artifacts) on GitHub
 - [Quiet output](#quiet-flag)
 - Set Cypress [config values](#config)
@@ -37,10 +55,9 @@ If you are testing against a running server like the [Cypress Kitchen Sink showc
 - [Start server](#start-server) before running the tests
 - [Start multiple servers](#start-multiple-servers) before running the tests
 - [Wait for server](#wait-on) to respond before running the tests
-- [`wait-on` with Node.js 18+](#wait-on-with-nodejs-18) workarounds
 - Use [custom install command](#custom-install-command)
 - Use [command prefix](#command-prefix)
-- Use [own custom test command](#custom-test-command)
+- Use [custom test command](#custom-test-command)
 - Pass [custom build id](#custom-build-id) when recording to Cypress Cloud
 - Generate a [robust custom build id](#robust-custom-build-id) to allow re-running the workflow
 - Use different [working-directory](#working-directory)
@@ -54,6 +71,7 @@ If you are testing against a running server like the [Cypress Kitchen Sink showc
 - Use [custom cache key](#custom-cache-key)
 - Run tests on multiple [Node versions](#node-versions)
 - Split [install and tests](#split-install-and-tests) into separate jobs
+- Split [install and tests](#split-install-and-test-with-artifacts) with artifacts
 - Use [custom install commands](#custom-install)
 - Install [only Cypress](#install-cypress-only) to avoid installing all dependencies
 - Use [timeouts](#timeouts) to avoid hanging CI jobs
@@ -160,6 +178,29 @@ jobs:
 ```
 
 [![Chrome example](https://github.com/cypress-io/github-action/actions/workflows/example-chrome.yml/badge.svg)](.github/workflows/example-chrome.yml)
+
+### Chrome for Testing
+
+To install [Google Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/), specify a partial or full numerical Chrome for Testing version using [browser-actions/setup-chrome](https://github.com/browser-actions/setup-chrome). Refer to [Chrome for Testing availability](https://googlechromelabs.github.io/chrome-for-testing/) for current versions or [JSON API endpoints](https://github.com/GoogleChromeLabs/chrome-for-testing#json-api-endpoints) for all available versions.
+
+```yml
+name: Chrome for Testing
+on: push
+jobs:
+  chrome:
+    runs-on: ubuntu-24.04
+    name: E2E on Chrome for Testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: 137
+      - uses: cypress-io/github-action@v6
+        with:
+          browser: chrome-for-testing
+```
+
+[![Chrome for Testing example](https://github.com/cypress-io/github-action/actions/workflows/example-chrome-for-testing.yml/badge.svg)](.github/workflows/example-chrome-for-testing.yml)
 
 ### Firefox
 
@@ -343,7 +384,7 @@ For more information, visit [the Cypress command-line docs](https://on.cypress.i
 
 ### Project
 
-Specify the [project to run](https://docs.cypress.io/guides/guides/command-line.html#cypress-run-project-lt-project-path-gt) with `project` parameter
+Specify the [project to run](https://on.cypress.io/command-line#cypress-run-project-lt-project-path-gt) with the `project` parameter
 
 ```yml
 name: Cypress tests
@@ -358,16 +399,24 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          project: ./some/nested/folder
+          project: ./test-subdirectory
 ```
 
-For more information, visit [the Cypress command-line docs](https://on.cypress.io/command-line#cypress-run-project-lt-project-path-gt).
+The `project` parameter may be used to pass on the location of a sub-directory containing a Cypress configuration file and Cypress tests specs. For more information, visit [the Cypress command-line docs](https://on.cypress.io/command-line#cypress-run-project-lt-project-path-gt).
+
+A package manager lock file, including Cypress, must be provided in the root of the repository so that the action is able to [install Cypress](#installation).
+
+If the parameter [working-directory](#working-directory) is also defined, then this is the location to place the package manager lock file, and the project directory would be a subdirectory of the [working-directory](#working-directory). The `project` parameter location may not be above the level of a specified [working-directory](#working-directory) in the file hierarchy.
 
 ### Record test results on Cypress Cloud
 
-By setting the parameter `record` to `true`, you can record your test results into the [Cypress Cloud](https://on.cypress.io/cloud). Read the [Cypress Cloud documentation](https://on.cypress.io/guides/cloud/introduction) to learn how to sign up and create a Cypress Cloud project.
+By setting the parameter `record` to `true`, you can record your test results into [Cypress Cloud](https://on.cypress.io/cloud-introduction). Read the [Cypress Cloud setup](https://on.cypress.io/cloud/get-started/setup) documentation to learn how to sign up to Cypress Cloud, to create and set up a [Cloud project](https://on.cypress.io/cloud/account-management/projects) to get the required `projectId` and record key for recording.
 
-We recommend passing the `GITHUB_TOKEN` secret (created by the GH Action automatically) as an environment variable. This will allow correctly identifying every build and avoid confusion when re-running a build.
+- The `projectId` can either be stored in the [Cypress Configuration File](https://on.cypress.io/app/references/configuration#Configuration-File) or passed to the action as an environment variable `CYPRESS_PROJECT_ID`. In the example below, it is retrieved from a [GitHub secret](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) variable.
+
+- The record key is passed to the action as an environment variable `CYPRESS_RECORD_KEY`. We recommend you treat this value as sensitive and store it as a [GitHub secret](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) variable, so that access is restricted.
+
+- We recommend passing the `GITHUB_TOKEN` secret (created by the GH Action automatically) as an environment variable. This will allow correctly identifying every build and avoid confusion when re-running a build.
 
 ```yml
 name: Cypress tests
@@ -385,39 +434,15 @@ jobs:
         with:
           record: true
         env:
+          # pass the Cypress Cloud project ID as an environment variable or store it in the Cypress configuration file
+          CYPRESS_PROJECT_ID: ${{ secrets.EXAMPLE_PROJECT_ID }}
+          # pass the Cypress Cloud record key as an environment variable
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 [![recording example](https://github.com/cypress-io/github-action/actions/workflows/example-recording.yml/badge.svg)](.github/workflows/example-recording.yml)
-
-### Project ID and Record Key
-
-To record the project needs `projectId` and `recordKey`.
-
-Typically, the `projectId` is stored in the [Cypress Configuration File](https://docs.cypress.io/guides/references/configuration#Configuration-File), while the `recordKey` is set as a [CLI parameter](https://docs.cypress.io/guides/guides/command-line#cypress-run-record-key-lt-record-key-gt). If you want to avoid this, both the `projectId` and `recordKey` can be provided as environment variables using [GitHub secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
-
-```yml
-name: Cypress tests
-on: push
-jobs:
-  cypress-run:
-    name: Cypress run
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          record: true
-        env:
-          # pass the Cypress Cloud record key as an environment variable
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-          # pass the project ID from the secrets through environment variable
-          CYPRESS_PROJECT_ID: ${{ secrets.PROJECT_ID }}
-```
 
 ### Git information
 
@@ -433,7 +458,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
@@ -441,6 +465,7 @@ jobs:
         env:
           # Get the short ref name of the branch that triggered the workflow run
           COMMIT_INFO_BRANCH: ${{ github.ref_name }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
 ```
 
 Please refer to the [Cypress Cloud Git information environment variables](https://on.cypress.io/guides/continuous-integration/introduction#Git-information) section in our documentation for more examples.
@@ -473,7 +498,7 @@ jobs:
       - run: echo "PR number is $CYPRESS_PULL_REQUEST_ID"
       - run: echo "PR URL is $CYPRESS_PULL_REQUEST_URL"
     env:
-      CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -514,6 +539,7 @@ jobs:
           COMMIT_INFO_MESSAGE: ${{github.event.pull_request.title}}
           # re-enable PR comment bot
           COMMIT_INFO_SHA: ${{github.event.pull_request.head.sha}}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
 ```
 
 See [issue 124](https://github.com/cypress-io/github-action/issues/124#issuecomment-1076826988) for details.
@@ -531,7 +557,7 @@ jobs:
     # let's make sure our "app" works on several versions of Node
     strategy:
       matrix:
-        node: [18, 20, 22, 23]
+        node: [20, 22, 24]
     name: E2E on Node v${{ matrix.node }}
     steps:
       - name: Setup Node
@@ -549,7 +575,7 @@ jobs:
           record: true
           tag: node-${{ matrix.node }}
         env:
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -557,9 +583,9 @@ The recording will have tags as labels on the run.
 
 ![Tags](images/tags.png)
 
-You can pass multiple tags using commas like `tag: node-18,nightly,staging`.
+You can pass multiple tags using commas like `tag: node-22,nightly,staging`.
 
-### Specify auto cancel after failures
+### Auto cancel after failures
 
 Specify the number of failed tests that will cancel a run when using the [Cypress Cloud Auto Cancellation](https://docs.cypress.io/cloud/features/smart-orchestration/run-cancellation) feature.
 
@@ -583,7 +609,7 @@ jobs:
           # Cancel the run after 2 failed tests
           auto-cancel-after-failures: 2
         env:
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -724,7 +750,7 @@ jobs:
           group: 'Actions example'
         env:
           # pass the Cypress Cloud record key as an environment variable
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           # Recommended: pass the GitHub token lets this action correctly
           # determine the unique run id necessary to re-run the checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -739,7 +765,7 @@ If you use the GitHub Actions facility for [Re-running workflows and jobs](https
 To optimize runs when there are failing tests present, refer to optional [Cypress Cloud Smart Orchestration](https://docs.cypress.io/cloud/features/smart-orchestration/overview/) Premium features:
 
 - [Spec Prioritization](https://docs.cypress.io/cloud/features/smart-orchestration/spec-prioritization)
-- [Auto Cancellation](https://docs.cypress.io/guides/cloud/smart-orchestration/run-cancellation). See also [Specify auto cancel after failures](#specify-auto-cancel-after-failures) for details of how to set this option in a Cypress GH Action workflow.
+- [Auto Cancellation](https://docs.cypress.io/guides/cloud/smart-orchestration/run-cancellation). See also [Auto cancel after failures](#auto-cancel-after-failures) for details of how to set this option in a Cypress GitHub Action workflow.
 
 During staged rollout of a new GitHub-hosted runner version, GitHub may provide a mixture of current and new image versions used by the container matrix. It is recommended to use a [Docker image](#docker-image) in the parallel job run which avoids any Cypress Cloud errors due to browser major version mismatch from the two different image versions. A [Docker image](#docker-image) is not necessary if testing against the default built-in Electron browser because this browser version is fixed by the Cypress version in use and it is unaffected by any GitHub runner image rollout.
 
@@ -815,7 +841,7 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          # Linux and MacOS
+          # Linux and macOS
           start: npm start
           # Takes precedences on Windows
           start-windows: npm run start:windows:server
@@ -918,14 +944,6 @@ See [example-wait-on.yml](.github/workflows/example-wait-on.yml) workflow file.
 
 If this action times out waiting for the server to respond, please see [Debugging](#debugging) section in this README file.
 
-#### `wait-on` with Node.js 18+
-
-Under Node.js version 18 and later, `wait-on` may fail to recognize that a `localhost` server is running. This affects development web servers which do not listen on both IPv4 and IPv6 network stacks.
-
-- Check your server documentation to see if it can be started using `0.0.0.0` (all addresses) and use this if available. If this option is not available or does not resolve the issue then carry on to the next steps:
-- If the action log shows that `wait-on` is failing to connect to `127.0.0.1`, replace `localhost` by `[::1]` (the IPv6 loopback address)
-- If the action log shows that `wait-on` is failing to connect to `::1`, replace `localhost` by `127.0.0.1` (the IPv4 loopback address)
-
 ### Custom install command
 
 The action installs dependencies based on a package manager lock file using default commands described in the [Installation](#installation) section below. If you want to overwrite the default install command you can use the `install-command` option:
@@ -942,7 +960,19 @@ If you do not commit a lock file to the repository, you cannot use the action to
 
 ### Command prefix
 
-You can prefix the default test command using the `command-prefix` option. This is useful for example when running [Percy](https://docs.percy.io/docs/cypress), which requires the test command to be wrapped with `percy exec --`.
+You can prefix a test command using the `command-prefix` parameter. This is useful, for example, when running [BrowserStack Percy](https://www.browserstack.com/docs/percy/integrate/cypress), which requires the test command to be prefixed with `percy exec --`. When this parameter is used, the action constructs and executes a CLI command using [npx](https://docs.npmjs.com/cli/v11/commands/npx) in the following form:
+
+```shell
+npx <command-prefix> cypress run <cli run options>
+```
+
+where the `<command-prefix>` is the literal string value from the `command-prefix` parameter and `<cli run options>` are put together from action parameters such as the value of the `browser` parameter. The complete constructed command is shown in the logs. For the example below, this is shown as:
+
+```text
+Cypress test command: npx percy exec -- npx cypress run --browser chrome
+```
+
+Since `command-prefix` is run using `npx`, it is compatible with [npm](https://docs.npmjs.com/cli/v11/) and [Yarn Classic](https://classic.yarnpkg.com/). It may also be used with [pnpm](https://pnpm.io/settings#nodelinker) and [Yarn Modern](https://yarnpkg.com/configuration/yarnrc#nodeLinker) when they are configured for `nodeLinker` compatibility with the `node_modules` directory structure of npm. An alternative to using `command-prefix` is to pass a complete [command](#custom-test-command) parameter instead, including the exact command to be passed to the CLI.
 
 ```yml
 name: Visual
@@ -956,32 +986,36 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          start: npm start
-          # quote the url to be safe against YML parsing surprises
-          wait-on: 'http://localhost:8080'
-          # the entire command will automatically be prefixed with "npm"
-          # and we need the second "npm" to execute "cypress run ..." command line
           command-prefix: 'percy exec -- npx'
+          browser: chrome
 ```
+
+If `command-prefix` is used, then no [job summary](#job-summary-title) is produced, since it runs Cypress with a CLI [cypress run](https://on.cypress.io/app/references/command-line#cypress-run) command instead of using the [Cypress Module API](https://docs.cypress.io/app/references/module-api). The `command` parameter overrides the `command-prefix` parameter, preventing these two parameters from being used together.
 
 ### Custom test command
 
-You can overwrite the Cypress run command with your own command.
+The `command` parameter executes a CLI command using the GitHub [@actions/exec](https://github.com/actions/toolkit/tree/main/packages/exec) action.
+
+This parameter is useful for special test cases, for example:
+
+- in the project [examples/custom-command](./examples/custom-command/), a JavaScript [examples/custom-command/index.js](./examples/custom-command/index.js) is run with `node .` through `command: npm run custom-test`
+- in the workflow [example-yarn-modern-pnp.yml](.github/workflows/example-yarn-modern-pnp.yml) Yarn Modern with Plug'n'Play is run with `command: yarn run --binaries-only cypress run` since [Yarn Plug'n'Play](#yarn-plugnplay) is not natively supported by the action.
+
+If you don't have a special case and you just need to convert a `cypress run` CLI command to use the Cypress GitHub Action, refer to the section [Migrating from CLI command](#migrating-from-cli-command) which explains how to map CLI options to equivalent action parameters, avoiding the need for the `command` parameter in most cases.
+
+There are some parameters that cannot be used together with the `command` parameter, and these are ignored. The parameters include action input parameters listed in the table [CLI Run Option / Action Parameter](#cli-run-option--action-parameter), the [publish-summary](#suppress-job-summary), [summary-title](#job-summary-title) and [command-prefix](#command-prefix). If any such parameters are passed to the action, a warning message appears in the logs that the parameters have been ignored.
+
+Correct example snippet:
 
 ```yml
 steps:
-  - name: Checkout 🛎
-    uses: actions/checkout@v4
-
-  - name: Custom tests 🧪
-    uses: cypress-io/github-action@v6
+  - uses: actions/checkout@v4
+  - uses: cypress-io/github-action@v6
     with:
-      command: npm run e2e:ci
+      command: npm run custom-test
 ```
 
-**Caution**: using the action parameter `command` causes multiple other parameters to be ignored including: `auto-cancel-after-failures`, `browser`, `ci-build-id`, `command-prefix`, `component`, `config`, `config-file`, `env`, `group`, `headed`, `parallel`, `project`, `publish-summary`, `quiet`, `record`, `spec` and `tag`.
-
-See [example-custom-command.yml](.github/workflows/example-custom-command.yml) file.
+[![command example](https://github.com/cypress-io/github-action/actions/workflows/example-custom-command.yml/badge.svg)](.github/workflows/example-custom-command.yml)
 
 ### Custom build id
 
@@ -1007,7 +1041,7 @@ jobs:
           ci-build-id: '${{ github.sha }}-${{ github.workflow }}-${{ github.event_name }}'
         env:
           # pass the Cypress Cloud record key as an environment variable
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -1061,8 +1095,8 @@ repo/
       fixtures/
       support/
     cypress.config.js
-  package.json
-  package-lock.json
+    package.json
+    package-lock.json
 ```
 
 We use `working-directory: app-test` to match the above example directory structure:
@@ -1129,7 +1163,7 @@ jobs:
 
 The package manager `pnpm` is not pre-installed in [GitHub Actions runner images](https://github.com/actions/runner-images) (unlike `npm` and `yarn`) and so it must be installed in a separate workflow step (see below). If the action finds a `pnpm-lock.yaml` file, it uses the [pnpm](https://pnpm.io/cli/install) command `pnpm install --frozen-lockfile` by default to install dependencies.
 
-The example below follows [pnpm recommendations](https://pnpm.io/continuous-integration#github-actions) for installing pnpm and caching the [pnpm store](https://pnpm.io/cli/store). Add [side-effects-cache=false](https://pnpm.io/npmrc#side-effects-cache) to an `.npmrc` file in your project to allow pnpm to install the Cypress binary even if the Cypress npm module has been cached by pnpm.
+The example below follows [pnpm recommendations](https://pnpm.io/continuous-integration#github-actions) for installing pnpm and caching the [pnpm store](https://pnpm.io/cli/store). Follow the [Cypress pnpm configuration instructions](https://on.cypress.io/install#pnpm-Configuration) and apply them to your project, to enable pnpm to install the Cypress binary.
 
 ```yaml
 name: example-basic-pnpm
@@ -1304,7 +1338,7 @@ jobs:
     # let's make sure our "app" works on several versions of Node
     strategy:
       matrix:
-        node: [18, 20, 22, 23]
+        node: [20, 22, 24]
     name: E2E on Node v${{ matrix.node }}
     steps:
       - name: Setup Node
@@ -1322,7 +1356,7 @@ jobs:
           group: Tests on Node v${{ matrix.node }}
           cache-key: node-v${{ matrix.node }}-on-${{ runner.os }}-hash-${{ hashFiles('yarn.lock') }}
         env:
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -1338,7 +1372,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        node: [18, 20, 22, 23]
+        node: [20, 22, 24]
     name: E2E on Node v${{ matrix.node }}
     steps:
       - uses: actions/setup-node@v4
@@ -1380,6 +1414,54 @@ jobs:
 ```
 
 See [cypress-gh-action-monorepo](https://github.com/bahmutov/cypress-gh-action-monorepo) for a working example.
+
+### Split install and test with artifacts
+
+If your test job(s) first need a build step, you can split the jobs into a separate build job followed by test jobs. You pass the build results to any subsequent jobs using [GitHub Actions artifacts](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow).
+
+In the build job, use [upload-artifact](https://github.com/actions/upload-artifact) to store the build results, then in subsequent jobs use [download-artifact](https://github.com/actions/download-artifact) to restore them.
+
+Your tests jobs may use a [GitHub Actions matrix strategy](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow), such as when recording to [Cypress Cloud](https://on.cypress.io/cloud-introduction) with [parallel jobs](#parallel).
+
+```yml
+name: Split build and test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app
+        uses: cypress-io/github-action@v6
+        with:
+          runTests: false # only build app, don't test yet
+          build: npm run build
+      - name: Store build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: build
+          if-no-files-found: error
+          retention-days: 1
+
+  test:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: build
+
+      - name: Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start # start server using the build artifacts
+```
+
+[![Split with build artifacts](https://github.com/cypress-io/github-action/actions/workflows/example-build-artifacts.yml/badge.svg)](.github/workflows/example-build-artifacts.yml)
 
 ### Custom install
 
@@ -1429,15 +1511,74 @@ jobs:
 | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [cypress-io/cypress-example-kitchensink](https://github.com/cypress-io/cypress-example-kitchensink) | Runs every API command in Cypress using various CI platforms including GitHub Actions |
 | [cypress-io/cypress-realworld-app](https://github.com/cypress-io/cypress-realworld-app)             | A real-world example payment application. Uses GitHub Actions and CircleCI.           |
-| [cypress-gh-action-monorepo](https://github.com/bahmutov/cypress-gh-action-monorepo)                | Splits install and running tests commands, runs Cypress from sub-folder               |
-| [cypress-examples](https://github.com/bahmutov/cypress-examples)                                    | Shows separate install job from parallel test jobs                                    |
-| [cypress-gh-action-split-jobs](https://github.com/bahmutov/cypress-gh-action-split-jobs)            | Shows a separate install job with the build step, and another job that runs the tests |
+
+## Migration
+
+### Migrating from CLI command
+
+To migrate from Cypress [CLI run command options](https://on.cypress.io/command-line#Options) to Cypress GitHub Action parameters, check the [CLI Run Option / Action Parameter](#cli-run-option--action-parameter) table below. In most cases, the name of the action parameter is the same as the long form of the `cypress run` CLI option.
+
+Create a [GitHub Actions workflow](https://docs.github.com/en/actions/writing-workflows/quickstart) referring to [Workflow syntax for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions). The action `cypress-io/github-action@v6` is invoked with the `uses` keyword. Cypress GitHub Action input parameters are specified under the [with](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswith) keyword.
+
+If you have previously been using a [CLI command](https://on.cypress.io/command-line#cypress-run) to run Cypress locally or in a CI environment, you will be familiar with testing commands like this:
+
+```shell
+npx cypress run --spec cypress/e2e/spec.cy.js --browser chrome
+```
+
+or you may be using a script defined in your project's `package.json` file, such as:
+
+```json
+"cy:e2e:chrome": "cypress run --spec cypress/e2e/spec.cy.js --browser chrome"
+```
+
+Here is the equivalent GitHub Actions example workflow. The action runs Cypress by passing the action parameters (`browser` and `spec`) programmatically to the [Cypress Module API](https://on.cypress.io/module-api) without using any CLI. The complete workflow also checks out the repo and installs dependencies before running Cypress.
+
+```yml
+name: CLI migration example
+on: push
+jobs:
+  cypress-run:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Cypress run # install dependencies and run Cypress E2E tests
+        uses: cypress-io/github-action@v6 # replaces CLI cypress run
+        with:
+          browser: chrome # replaces CLI option --browser chrome
+          spec: cypress/e2e/spec.cy.js # replaces CLI option --spec cypress/e2e/spec.cy.js
+```
+
+#### CLI Run Option / Action Parameter
+
+| CLI Option `cypress run`       | Action Parameter                                            | Description                                                                                          |
+| ------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `--auto-cancel-after-failures` | [`auto-cancel-after-failures`](#auto-cancel-after-failures) | Set the failed test threshold for auto cancellation or disable auto cancellation for Cloud recording |
+| `--browser`, `-b`              | [`browser`](#browser)                                       | Select browser that Cypress runs in. A filesystem path to a browser can also be used.                |
+| `--ci-build-id`                | [`ci-build-id`](#custom-build-id)                           | Specify a unique identifier for a run to enable grouping or parallelization for Cloud recording      |
+| `--component`                  | [`component`](#component-testing)                           | Run component tests                                                                                  |
+| `--config`, `-c`               | [`config`](#config)                                         | Specify configuration                                                                                |
+| `--config-file`, `-C`          | [`config-file`](#config-file)                               | Specify configuration file                                                                           |
+| `--e2e`                        | [`component: false`](#component-testing) (default)          | Run end to end tests                                                                                 |
+| `--env`, `-e`                  | [`env`](#env)                                               | Specify environment variables                                                                        |
+| `--group`                      | [`group`](#parallel)                                        | Group recorded tests together under a single run for Cloud recording                                 |
+| `--headed`                     | [`headed`](#headed)                                         | Display the browser instead of running headlessly                                                    |
+| `--headless`                   | [`headed: false`](#headed) (default)                        | Hide the browser instead of running headed                                                           |
+| `--parallel`                   | [`parallel`](#parallel)                                     | Run recorded specs in parallel across multiple machines for Cloud recording                          |
+| `--project`, `-P`              | [`project`](#project)                                       | Path to a specific project                                                                           |
+| `--quiet`, `-q`                | [`quiet`](#quiet-flag)                                      | Reduce output to `stdout`                                                                            |
+| `--record`                     | [`record`](#record-test-results-on-cypress-cloud)           | Record the test run to Cypress Cloud                                                                 |
+| `--spec`, `-s`                 | [`spec`](#specs)                                            | Specify the spec files to run                                                                        |
+| `--tag`, `-t`                  | [`tag`](#tag-recordings)                                    | Identify a run with a tag or tags                                                                    |
+
+There is no equivalent action parameter for the CLI options `help`, `key`, `--no-exit`, `--no-runner-ui`, `port`, `reporter`, `reporter-options` or `runner-ui`. See the section [Record test results on Cypress Cloud](#record-test-results-on-cypress-cloud) for information on passing a Cypress Cloud record key to the action.
 
 ## Notes
 
 ### Installation
 
-This action installs local dependencies using lock files. Ensure that exactly one type of lock file is used for each project or working-directory from the following supported package managers:
+This action installs local dependencies using lock files. Ensure that exactly one type of lock file is used at the root of the repo or in each working-directory of a monorepo from the following supported package managers:
 
 | Lock file           | Package Manager                                                                                  | Installation command             |
 | ------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------- |
@@ -1547,7 +1688,7 @@ If you configure a `workflow_dispatch` event in your own workflows, you will be 
 
 ### Outputs
 
-This action sets a GitHub step output `resultsUrl` if the run was recorded on [Cypress Cloud](https://on.cypress.io/cloud-introduction) using the action parameter setting `record: true` (see [Record test results on Cypress Cloud](#record-test-results-on-cypress-cloud)). Note that if a custom test command with the [command](#custom-test-command) option or the [command-prefix](#command-prefix) option are used then no `resultsUrl` step output is saved.
+This action sets a GitHub step output `resultsUrl` if the run was recorded on [Cypress Cloud](https://on.cypress.io/cloud-introduction) using the action parameter setting `record: true` (see [Record test results on Cypress Cloud](#record-test-results-on-cypress-cloud)). Note that if a custom test command with the [command](#custom-test-command) parameter or the [command-prefix](#command-prefix) parameter are used then no `resultsUrl` step output is saved.
 
 This is an example of using the step output `resultsUrl`:
 
@@ -1560,7 +1701,7 @@ This is an example of using the step output `resultsUrl`:
   with:
     record: true
   env:
-    CYPRESS_RECORD_KEY: ${{ secrets.RECORDING_KEY }}
+    CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
 - name: Print Cypress Cloud URL
   if: always()
   run: |
@@ -1698,7 +1839,7 @@ jobs:
 
 Node.js is required to run this action. The recommended version `v6` supports:
 
-- **Node.js** 18.x, 20.x, 22.x and 23.x
+- **Node.js** 20.x, 22.x and 24.x
 
 and is generally aligned with [Node.js's release schedule](https://github.com/nodejs/Release).
 
@@ -1717,6 +1858,7 @@ View the [CHANGELOG](./CHANGELOG.md) document for an overview of version changes
 ## Compatibility
 
 - `github-action@v6` is the current recommended version, uses `node20` and is compatible with Cypress `10` and above.
+- `github-action@v6.7.9` is the minimum version required to use GitHub Actions caching services. The legacy caching service used by lower versions of the action is no longer available.
 - `github-action` versions `v1` to `v5` are unsupported: they rely on Node.js `12` and `16` in End-of-life status.
 
 ## Contributing

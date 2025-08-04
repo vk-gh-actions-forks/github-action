@@ -8,8 +8,6 @@ The [examples](../examples) directory contains examples of the use of Cypress (C
 
 The examples make use of [npm](https://www.npmjs.com/), [pnpm](https://pnpm.io/), [Yarn 1 (Classic)](https://classic.yarnpkg.com/) and [Yarn Modern](https://yarnpkg.com/) to define and install the packages being used. For [Yarn Modern](https://yarnpkg.com/) the recommended [Corepack](https://yarnpkg.com/corepack) is used as a Yarn version manager.
 
-_The previous [examples/v9](https://github.com/cypress-io/github-action/tree/v5/examples/v9) are archived in the [v5](https://github.com/cypress-io/github-action/tree/v5/) branch. This directory contains examples which were set up to use Cypress `9.7.0`, the last version using Legacy Configuration, covering Cypress 9 and below. These `v9` examples are no longer maintained._
-
 ## Requirements
 
 - A local system running [Ubuntu](https://ubuntu.com/), <!-- markdown-link-check-disable -->[Microsoft Windows](https://www.microsoft.com/windows/)<!-- markdown-link-check-enable --> or [Apple macOS](https://www.apple.com/macos/).
@@ -20,13 +18,7 @@ _The previous [examples/v9](https://github.com/cypress-io/github-action/tree/v5/
 
 - [npm](https://www.npmjs.com/), which is installed with [Node.js](https://nodejs.org/).
 
-- [corepack](https://github.com/nodejs/corepack), which is installed with [Node.js](https://nodejs.org/).
-
-- [pnpm](https://pnpm.io/) installed through:
-
-```bash
-npm install pnpm@latest -g
-```
+- [corepack](https://github.com/nodejs/corepack). This is currently installed with [Node.js](https://nodejs.org/). Due to plans of Node.js to remove it in versions Node.js `25.x` and later, you may need to install it separately with `npm install -g corepack`.
 
 - [Visual Studio Code](https://code.visualstudio.com/) or other editor
 
@@ -52,6 +44,10 @@ This updates all [examples](../examples) to cypress@latest.
 
 After updating the examples locally, they can be committed with git and a pull request opened on GitHub.
 
+### Updating pnpm examples
+
+The script [/scripts/update-cypress-latest-pnpm.sh](../scripts/update-cypress-latest-pnpm.sh) (which is invoked through `npm run update:cypress` to update the pnpm examples) runs [pnpm](https://pnpm.io/) as an `npm` global install. It leaves pnpm installed and Corepack disabled for pnpm on completion.
+
 ### Updating Yarn examples
 
-The script [/scripts/update-cypress-latest-yarn.sh](../scripts/update-cypress-latest-yarn.sh) (which is invoked through `npm run update:cypress` to update the Yarn examples) runs [Yarn 1 (Classic)](https://classic.yarnpkg.com/) as an `npm` global install, runs [Yarn Modern](https://yarnpkg.com/) through Corepack and returns Corepack to its default disabled state on completion.
+The script [/scripts/update-cypress-latest-yarn.sh](../scripts/update-cypress-latest-yarn.sh) (which is invoked through `npm run update:cypress` to update the Yarn examples) runs [Yarn 1 (Classic)](https://classic.yarnpkg.com/) as an `npm` global install and runs [Yarn Modern](https://yarnpkg.com/) through Corepack. It leaves Yarn Classic installed and Corepack disabled for Yarn on completion.

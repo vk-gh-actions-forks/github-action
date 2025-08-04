@@ -39393,7 +39393,7 @@ function expand(str, isTop) {
   var isOptions = m.body.indexOf(',') >= 0;
   if (!isSequence && !isOptions) {
     // {a},b}
-    if (m.post.match(/,.*\}/)) {
+    if (m.post.match(/,(?!,).*\}/)) {
       str = m.pre + '{' + m.body + escClose + m.post;
       return expand(str);
     }
@@ -63543,7 +63543,7 @@ module.exports = {
 
 
 const { parseSetCookie } = __nccwpck_require__(4408)
-const { stringify, getHeadersList } = __nccwpck_require__(3121)
+const { stringify } = __nccwpck_require__(3121)
 const { webidl } = __nccwpck_require__(1744)
 const { Headers } = __nccwpck_require__(554)
 
@@ -63619,14 +63619,13 @@ function getSetCookies (headers) {
 
   webidl.brandCheck(headers, Headers, { strict: false })
 
-  const cookies = getHeadersList(headers).cookies
+  const cookies = headers.getSetCookie()
 
   if (!cookies) {
     return []
   }
 
-  // In older versions of undici, cookies is a list of name:value.
-  return cookies.map((pair) => parseSetCookie(Array.isArray(pair) ? pair[1] : pair))
+  return cookies.map((pair) => parseSetCookie(pair))
 }
 
 /**
@@ -64054,14 +64053,15 @@ module.exports = {
 /***/ }),
 
 /***/ 3121:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((module) => {
 
 "use strict";
 
 
-const assert = __nccwpck_require__(9491)
-const { kHeadersList } = __nccwpck_require__(2785)
-
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
 function isCTLExcludingHtab (value) {
   if (value.length === 0) {
     return false
@@ -64322,31 +64322,13 @@ function stringify (cookie) {
   return out.join('; ')
 }
 
-let kHeadersListNode
-
-function getHeadersList (headers) {
-  if (headers[kHeadersList]) {
-    return headers[kHeadersList]
-  }
-
-  if (!kHeadersListNode) {
-    kHeadersListNode = Object.getOwnPropertySymbols(headers).find(
-      (symbol) => symbol.description === 'headers list'
-    )
-
-    assert(kHeadersListNode, 'Headers cannot be parsed')
-  }
-
-  const headersList = headers[kHeadersListNode]
-  assert(headersList)
-
-  return headersList
-}
-
 module.exports = {
   isCTLExcludingHtab,
-  stringify,
-  getHeadersList
+  validateCookieName,
+  validateCookiePath,
+  validateCookieValue,
+  toIMFDate,
+  stringify
 }
 
 
@@ -68350,6 +68332,7 @@ const {
   isValidHeaderName,
   isValidHeaderValue
 } = __nccwpck_require__(2538)
+const util = __nccwpck_require__(3837)
 const { webidl } = __nccwpck_require__(1744)
 const assert = __nccwpck_require__(9491)
 
@@ -68903,6 +68886,9 @@ Object.defineProperties(Headers.prototype, {
   [Symbol.toStringTag]: {
     value: 'Headers',
     configurable: true
+  },
+  [util.inspect.custom]: {
+    enumerable: false
   }
 })
 
@@ -78079,6 +78065,20 @@ class Pool extends PoolBase {
       ? { ...options.interceptors }
       : undefined
     this[kFactory] = factory
+
+    this.on('connectionError', (origin, targets, error) => {
+      // If a connection error occurs, we remove the client from the pool,
+      // and emit a connectionError event. They will not be re-used.
+      // Fixes https://github.com/nodejs/undici/issues/3895
+      for (const target of targets) {
+        // Do not use kRemoveClient here, as it will close the client,
+        // but the client cannot be closed in this state.
+        const idx = this[kClients].indexOf(target)
+        if (idx !== -1) {
+          this[kClients].splice(idx, 1)
+        }
+      }
+    })
   }
 
   [kGetDispatcher] () {
@@ -93982,10 +93982,58 @@ const runTestsUsingCommandLine = async () => {
 
   return exec.exec(quote(npxPath), cmd, opts)
 }
+/**
+ * Validate input parameters for consistency when command parameter is used
+ * Output GitHub actions annotation warning if ignored parameters are used
+ */
+const commandIgnoredBooleanInputs = [
+  // parameter name, default value
+  ['component', false],
+  ['headed', false],
+  ['parallel', false],
+  ['quiet', false],
+  ['record', false],
+  ['publish-summary', true]
+]
+const commandIgnoredStringInputs = [
+  'auto-cancel-after-failures',
+  'browser',
+  'ci-build-id',
+  'config',
+  'config-file',
+  'env',
+  'group',
+  'project',
+  'spec',
+  'tag',
+  'command-prefix',
+  'summary-title'
+]
+let ignoredInputParameters = []
+const validateCustomCommand = () => {
+  commandIgnoredBooleanInputs.forEach((input) => {
+    const inputParameter = input[0]
+    const inputDefault = input[1]
+    if (getInputBool(inputParameter) !== inputDefault) {
+      ignoredInputParameters.push(inputParameter)
+    }
+  })
+  commandIgnoredStringInputs.forEach((input) => {
+    if (core.getInput(input)) {
+      ignoredInputParameters.push(input)
+    }
+  })
+  if (ignoredInputParameters.length > 0) {
+    core.warning(
+      `command parameter is used and the following other parameters are ignored: ${ignoredInputParameters.sort().join(', ')}.`
+    )
+  }
+}
 
 /**
  * Run Cypress tests by collecting input parameters
  * and using Cypress module API to run tests.
+ * If command parameter is specified, then run using @actions/exec instead.
  * @see https://on.cypress.io/module-api
  */
 const runTests = async () => {
@@ -94014,6 +94062,7 @@ const runTests = async () => {
 
   if (customCommand) {
     console.log('Using custom test command: %s', customCommand)
+    validateCustomCommand() // catch ignored parameters and output warning
     return execCommand(customCommand, true, 'run tests')
   }
 
@@ -94030,6 +94079,7 @@ const runTests = async () => {
   debug(`requiring cypress dependency, cwd is ${process.cwd()}`)
   debug(`working directory ${workingDirectory}`)
   debug(`resolved cypress ${cypressModulePath}`)
+  debug(`GitHub JavaScript Action Node.js version ${process.version}`)
 
   if (core.getInput('group')) {
     cypressOptions.group = core.getInput('group')

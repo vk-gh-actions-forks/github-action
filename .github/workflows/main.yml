@@ -18,7 +18,7 @@ jobs:
           # https://github.com/cypress-io/github-action/blob/master/action.yml
           # Node.js minor version is aligned to
           # https://github.com/actions/runner/blob/main/src/Misc/externals.sh
-          node-version: 20.19.0
+          node-version: 20.19.2
       - run: npm ci
       # Core action code
       - run: npm run format # Prettier formats core action code
@@ -45,7 +45,7 @@ jobs:
         id: semantic
         with:
           # https://github.com/semantic-release/semantic-release
-          semantic_version: 24.1.0
+          semantic_version: 24.2.3
           branches: master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
