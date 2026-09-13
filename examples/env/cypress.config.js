@@ -1,9 +1,10 @@
-const { defineConfig } = require('cypress')
+import { defineConfig } from 'cypress'
 
-module.exports = defineConfig({
+export default defineConfig({
+  defaultBrowser: 'chrome',
   fixturesFolder: false,
   e2e: {
-    setupNodeEvents(on, config) {
+    setupNodeEvents (on, config) {
       console.log('logging from cypress.config.js')
       console.log(
         'process.env.CYPRESS_environmentName',

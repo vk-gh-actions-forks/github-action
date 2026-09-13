@@ -6,11 +6,16 @@ See [Releases](https://github.com/cypress-io/github-action/releases) for full de
 
 | Version | Changes                                                                                                      |
 | ------- | ------------------------------------------------------------------------------------------------------------ |
+| v7.4.0  | Examples remove Node.js 25. End of support for Node.js 25.                                                   |
+| v7.3.0  | Add parameter `expose` for [`Cypress.expose()`](https://docs.cypress.io/api/cypress-api/expose) support      |
+| v7.2.0  | Examples remove Node.js 20. End of support for Node.js 20.                                                   |
+| v7.1.0  | Add parameter `package-manager-cache`                                                                        |
+| v7.0.0  | Action runs under Node.js 24 instead of Node.js 20                                                           |
 | v6.10.0 | Examples remove Node.js 23. End of support for Node.js 23.                                                   |
 | v6.9.0  | Add parameter validation for `command`                                                                       |
 | v6.8.0  | Examples remove Node.js 18. End of support for Node.js 18.                                                   |
 | v6.7.10 | Examples updated to Cypress 14                                                                               |
-| v6.7.9  | Migrate to @actions/cache@4.0.0 for continued access to GitHub Actions caching services                      |
+| v6.7.9  | Migrate to `@actions/cache@4.0.0` for continued access to GitHub Actions caching services                    |
 | v6.7.0  | Examples remove Node.js 21. End of support for Node.js 21.                                                   |
 | v6.6.0  | Add parameter `summary-title`                                                                                |
 | v6.5.0  | Examples remove Node.js 16. End of support for Node.js 16.                                                   |

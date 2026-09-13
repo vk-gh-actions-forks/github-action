@@ -14,7 +14,12 @@ name: example-custom-ci-build-id
 # is generated _again_ on workflow re-run. This example
 # shows how to create a unique ID then pass it to
 # multiple testing jobs running in parallel.
-
+#
+# In the example jobs, the action is called with
+# uses: ./
+# which runs the action code from the current branch.
+# If you copy this workflow to another repo, replace the line with
+# uses: cypress-io/github-action@v7
 on:
   push:
     branches:
@@ -30,6 +35,9 @@ env:
   CYPRESS_PROJECT_ID: ${{ secrets.EXAMPLE_PROJECT_ID }}
   CYPRESS_RECORD_KEY: ${{ secrets.EXAMPLE_RECORDING_KEY }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   check-record-key:
@@ -69,9 +77,12 @@ jobs:
   smoke-tests:
     needs: [prepare]
     runs-on: ubuntu-24.04
+    container:
+      image: cypress/browsers:24.20.0
+      options: --user 1001
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Print custom build id
         run: echo "Custom build id is ${{ needs.prepare.outputs.uuid }}"
@@ -99,10 +110,13 @@ jobs:
       fail-fast: false
       matrix:
         # run 2 copies of the current job in parallel
-        containers: [1, 2]
+        recording-job: [1, 2]
+    container:
+      image: cypress/browsers:24.20.0
+      options: --user 1001
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Print custom build id
         run: echo "Custom build id is ${{ needs.prepare.outputs.uuid }}"

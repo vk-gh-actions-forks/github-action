@@ -11,6 +11,8 @@ on:
       - 'master'
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   check-dist:
@@ -18,15 +20,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v7
+      - name: Install Node.js
+        uses: actions/setup-node@v7
         with:
-          # Action runs: using: node20 as defined in
+          # Action runs: using: node24 as defined in
           # https://github.com/cypress-io/github-action/blob/master/action.yml
           # Node.js minor version is aligned to
           # https://github.com/actions/runner/blob/main/src/Misc/externals.sh
-          node-version: 20.19.2
+          node-version: 24.20.0
       - run: npm ci
       - run: npm run format
       - run: npm run build

@@ -18,7 +18,9 @@ The examples make use of [npm](https://www.npmjs.com/), [pnpm](https://pnpm.io/)
 
 - [npm](https://www.npmjs.com/), which is installed with [Node.js](https://nodejs.org/).
 
-- [corepack](https://github.com/nodejs/corepack). This is currently installed with [Node.js](https://nodejs.org/). Due to plans of Node.js to remove it in versions Node.js `25.x` and later, you may need to install it separately with `npm install -g corepack`.
+- [corepack](https://github.com/nodejs/corepack).
+  This is installed with [Node.js](https://nodejs.org/) <=24 and is only used for Yarn Modern examples.
+  You may need to install it separately with `npm install -g corepack` for Node.js >24.
 
 - [Visual Studio Code](https://code.visualstudio.com/) or other editor
 
@@ -39,8 +41,6 @@ npm run update:cypress
 ```
 
 This updates all [examples](../examples) to cypress@latest.
-
-[.github/workflows/example-install-only.yml](../.github/workflows/example-install-only.yml) contains a hard-coded Cypress version number. This can be updated by hand.
 
 After updating the examples locally, they can be committed with git and a pull request opened on GitHub.
 

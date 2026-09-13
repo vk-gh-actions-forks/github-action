@@ -699,6 +699,12 @@ const runTestsUsingCommandLine = async () => {
     cmd.push(envInput)
   }
 
+  const exposeInput = core.getInput('expose')
+  if (exposeInput) {
+    cmd.push('--expose')
+    cmd.push(exposeInput)
+  }
+
   const quiet = getInputBool('quiet')
   if (quiet) {
     cmd.push('--quiet')
@@ -739,6 +745,7 @@ const commandIgnoredStringInputs = [
   'config',
   'config-file',
   'env',
+  'expose',
   'group',
   'project',
   'spec',
@@ -762,7 +769,9 @@ const validateCustomCommand = () => {
   })
   if (ignoredInputParameters.length > 0) {
     core.warning(
-      `command parameter is used and the following other parameters are ignored: ${ignoredInputParameters.sort().join(', ')}.`
+      `command parameter is used and the following other parameters are ignored: ${ignoredInputParameters
+        .sort()
+        .join(', ')}.`
     )
   }
 }
@@ -856,6 +865,10 @@ const runTests = async () => {
 
   if (core.getInput('env')) {
     cypressOptions.env = core.getInput('env')
+  }
+
+  if (core.getInput('expose')) {
+    cypressOptions.expose = core.getInput('expose')
   }
 
   if (cypressOptions.parallel || cypressOptions.group) {
@@ -977,8 +990,16 @@ const installMaybe = () => {
     return Promise.resolve()
   }
 
+  const packageManagerCacheEnabled = getInputBool(
+    'package-manager-cache',
+    true
+  )
+  const npmCachePromise = packageManagerCacheEnabled
+    ? restoreCachedNpm()
+    : Promise.resolve(false)
+
   return Promise.all([
-    restoreCachedNpm(),
+    npmCachePromise,
     restoreCachedCypressBinary()
   ]).then(([npmCacheHit, cypressCacheHit]) => {
     debug(`npm cache hit ${npmCacheHit}`)
@@ -993,8 +1014,11 @@ const installMaybe = () => {
         }
 
         debug('verifying Cypress binary')
+        const saveNpmPromise = packageManagerCacheEnabled
+          ? saveCachedNpm()
+          : Promise.resolve(undefined)
         return verifyCypressBinary()
-          .then(saveCachedNpm)
+          .then(() => saveNpmPromise)
           .then(saveCachedCypressBinary)
       })
     })

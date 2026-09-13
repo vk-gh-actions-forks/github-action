@@ -75,7 +75,15 @@ To contribute changes, follow these instructions in the order given below:
 
 #### Windows users
 
-The repository is set up with a `git` / `Husky` pre-commit hook which ensures that any changes to the core source files are formatted and built consistently before they are committed. This does not work well with [GitHub Desktop](https://docs.github.com/en/desktop). You can disable this function by setting an environment variable `HUSKY=0`. If you do this and then omit to use `npm run format` / `npm run build` before you commit any changes affecting the core source files, you will find that checks fail when you submit a PR. In this case you should run the `format` and `build` commands and amend your commit.
+Rebuilding the action with `npm run build` produces different results under Windows compared to Ubuntu.
+This means that Windows cannot be used to rebuild the action,
+because the workflow [check-dist.yml](./.github/workflows/check-dist.yml), running under `ubuntu-24.04`,
+will fail for action content in the [dist](./dist/) directory built under Windows.
+
+The repository is set up with a `git` / `Husky` pre-commit hook which is intended to ensure that any changes
+to the core source files are formatted and built consistently before they are committed.
+Since this is not relevant for Windows, you can disable this function by setting an environment variable `HUSKY=0`.
+You can alternatively use `git commit` with `--no-verify` to bypass the pre-commit hook from `Husky` when working on Windows.
 
 ### Adding a new example
 
@@ -96,10 +104,10 @@ which calls the action code from the branch they are running in when the workflo
 From another (external) repository, the production version of the action is called with
 
 ```yaml
-- uses: cypress-io/github-action@v6
+- uses: cypress-io/github-action@v7
 ```
 
-To test out a branch in development calling it from another repository, replace `v6` by the name of your branch. If your branch is in a fork, then also replace `cypress-io` by your own GitHub username in the form:
+To test out a branch in development calling it from another repository, replace `v7` by the name of your branch. If your branch is in a fork, then also replace `cypress-io` by your own GitHub username in the form:
 
 `- uses: <your-username>/github-action@<your-branch>`
 
@@ -123,7 +131,7 @@ This information is for Cypress.io Members or Collaborators who merge pull reque
    BREAKING CHANGE: requires minimum Node.js 18 to run
    ```
 
-1. New versions of this action will be released automatically by the CI when merged to the `master` branch, see [.github/workflows/main.yml](.github/workflows/main.yml). This will create a new [GitHub release](https://github.com/cypress-io/github-action/releases) and will update the current highest branch from the series `v5`, `v6`, ... etc. Thus specifying `uses: cypress-io/github-action@v6` (or higher version if available) selects the new version automatically. This **will not** push the latest release to GitHub Marketplace.
+1. New versions of this action will be released automatically by the CI when merged to the `master` branch, see [.github/workflows/main.yml](.github/workflows/main.yml). This will create a new [GitHub release](https://github.com/cypress-io/github-action/releases) and will update the current highest branch from the series `v5`, `v6`, ... etc. Thus specifying `uses: cypress-io/github-action@v7` (or higher version if available) selects the new version automatically. This **will not** push the latest release to GitHub Marketplace.
 1. The action's CI is configured to use the [default Angular release rules](https://github.com/semantic-release/commit-analyzer/blob/master/lib/default-release-rules.js). This means that only `feat:`, `fix:` and `perf:` trigger a new release which is then logged to the [releases](https://github.com/cypress-io/github-action/releases) page. Other Angular commit types listed on [Contributing to Angular](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#-commit-message-format) can be used for documentation purposes, however they are ignored by the currently configured release process.
 
 ## GitHub Marketplace publication

@@ -1,7 +1,8 @@
 {
   "name": "example-wait-on",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "e2e tests for wait-on feature",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "cypress run",
@@ -20,6 +21,9 @@
     "debug": "4.3.6"
   },
   "devDependencies": {
-    "cypress": "14.5.3"
+    "cypress": "15.21.1"
+  },
+  "allowScripts": {
+    "cypress": true
   }
 }

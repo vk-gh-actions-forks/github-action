@@ -1,10 +1,11 @@
-const { defineConfig } = require('cypress')
+import { defineConfig } from 'cypress'
 
-module.exports = defineConfig({
+export default defineConfig({
+  defaultBrowser: 'chrome',
   fixturesFolder: false,
   e2e: {
     baseUrl: 'http://localhost:3333',
-    setupNodeEvents() {
+    setupNodeEvents () {
       console.log('\nUsing cypress.config-alternate.js config-file')
     },
     supportFile: false,

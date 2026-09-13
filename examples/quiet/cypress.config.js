@@ -1,11 +1,12 @@
-const { defineConfig } = require('cypress')
+import { defineConfig } from 'cypress'
 
-module.exports = defineConfig({
+export default defineConfig({
+  defaultBrowser: 'chrome',
   fixturesFolder: false,
   e2e: {
-    setupNodeEvents(on) {
+    setupNodeEvents (on) {
       on('task', {
-        log(message) {
+        log (message) {
           console.log(message)
           return null
         },

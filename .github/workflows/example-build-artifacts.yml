@@ -6,28 +6,36 @@ name: example-build-artifacts
 # The test jobs use the results from the build job:
 # - dependencies and the Cypress binary are installed using dependency caching
 # - build results are restored using actions/download-artifact
+#
+# In the example jobs, the action is called with
+# uses: ./
+# which runs the action code from the current branch.
+# If you copy this workflow to another repo, replace the line with
+# uses: cypress-io/github-action@v7
 on:
   push:
     branches:
       - 'master'
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Build app
-        uses: ./ # refers to local instance of cypress-io/github-action@v6
+        uses: ./
         with:
           runTests: false # only build app, don't test yet
           build: npm run build
           working-directory: examples/nextjs
       - name: Store build artifacts
-        uses: actions/upload-artifact@v4 # https://github.com/actions/upload-artifact
+        uses: actions/upload-artifact@v7 # https://github.com/actions/upload-artifact
         with:
           name: app
           path: examples/nextjs/build
@@ -39,14 +47,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2025, macos-15]
+        os:
+          - ubuntu-24.04
+          - windows-2025
+          - macos-26
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Restore build artifacts
-        uses: actions/download-artifact@v4 # https://github.com/actions/download-artifact
+        uses: actions/download-artifact@v8 # https://github.com/actions/download-artifact
         with:
           name: app
           path: examples/nextjs/build

@@ -1,22 +1,27 @@
 {
   "name": "example-nextjs",
-  "version": "2.0.0",
+  "version": "4.0.0",
   "description": "Example using Next.js",
+  "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "test": "cypress run"
   },
   "dependencies": {
-    "next": "^15.2.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "next": "^16.3.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "cypress": "14.5.3",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17"
+    "@tailwindcss/postcss": "^4.3.3",
+    "cypress": "15.21.1",
+    "tailwindcss": "^4.3.3"
+  },
+  "allowScripts": {
+    "cypress": true,
+    "sharp": true
   }
 }

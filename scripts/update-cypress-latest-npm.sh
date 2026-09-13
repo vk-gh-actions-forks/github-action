@@ -11,7 +11,7 @@ npmExamples=(
     'config'
     'custom-command'
     'env'
-    'install-only'
+    'expose'
     'nextjs'
     'node-versions'
     'quiet'

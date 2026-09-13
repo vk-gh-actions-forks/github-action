@@ -1,10 +1,11 @@
-const { defineConfig } = require('cypress')
-const os = require('os')
+import { defineConfig } from 'cypress'
+import os from 'node:os'
 
-module.exports = defineConfig({
+export default defineConfig({
+  defaultBrowser: 'chrome',
   fixturesFolder: false,
   e2e: {
-    setupNodeEvents(on) {
+    setupNodeEvents (on) {
       on('before:browser:launch', (browser, launchOptions) => {
         console.log('before launching browser')
         console.log(browser)
@@ -20,7 +21,7 @@ module.exports = defineConfig({
       })
 
       on('task', {
-        log(message) {
+        log (message) {
           console.log(message)
           return null
         },

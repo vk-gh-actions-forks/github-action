@@ -3,9 +3,11 @@
 
 // always log messages
 // useful because shows timestamps
-const log = require('debug')('*')
-const http = require('http')
-const arg = require('arg')
+import debug from 'debug'
+import http from 'node:http'
+import arg from 'arg'
+
+const log = debug('*')
 
 const args = arg({
   '--port': Number,
@@ -17,7 +19,7 @@ log('creating the server on port %d', port)
 const server = http.createServer((req, res) => {
   const reqTimestamp = +new Date()
   log('request at %d: %s %s', reqTimestamp, req.method, req.url)
-  setTimeout(function() {
+  setTimeout(function () {
     log('responding to request from %d', reqTimestamp)
     res.writeHead(200)
     res.end('all good')

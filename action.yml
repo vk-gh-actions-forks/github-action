@@ -29,6 +29,9 @@ inputs:
   env:
     description: 'Sets Cypress environment variables'
     required: false
+  expose:
+    description: 'Sets Cypress expose variables for non-sensitive, public config values (requires Cypress 15.10.0 or later)'
+    required: false
   group:
     description: 'Group setting for recording tests'
     required: false
@@ -83,6 +86,10 @@ inputs:
   install-command:
     description: 'Custom install command to use'
     required: false
+  package-manager-cache:
+    description: 'Set to false to disable automatic package manager caching. By default, package manager caching is enabled.'
+    required: false
+    default: true
   publish-summary:
     description: 'Whether or not to publish a job summary'
     required: false
@@ -115,7 +122,7 @@ outputs:
   resultsUrl:
     description: 'Cypress Cloud URL if the run was recorded'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 branding:
   color: 'green'

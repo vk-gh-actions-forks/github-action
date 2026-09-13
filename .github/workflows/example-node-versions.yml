@@ -5,6 +5,8 @@ on:
       - 'master'
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   cypress-run:
@@ -13,19 +15,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22, 24]
-    name: Cypress E2E on Node v${{ matrix.node }}
+        node:
+          - 22
+          - 24
+          - 26
+          - latest
+    name: Cypress E2E on Node.js ${{ matrix.node }}
     steps:
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Node.js
+        # https://github.com/actions/setup-node
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
+      - if: matrix.node == 'latest'
+        # test with bundled version of npm, except for with Node.js latest
+        run: npm install -g npm@latest
       - run: node -v
       - run: npm -v
 
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - uses: ./
+      - name: Cypress tests
+        uses: ./ # if copying, replace with cypress-io/github-action@v7
         with:
           working-directory: examples/node-versions

@@ -1,13 +1,14 @@
 {
   "name": "example-basic-pnpm",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "basic pnpm example how to run Cypress tests",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "cypress run"
   },
   "private": true,
   "devDependencies": {
-    "cypress": "14.5.3"
+    "cypress": "15.21.1"
   }
 }

@@ -5,16 +5,18 @@ on:
       - 'master'
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 
 jobs:
   install-command:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Custom Yarn command
-        uses: ./
+        uses: ./ # if copying, replace with cypress-io/github-action@v7
         with:
           working-directory: examples/install-command
           # https://classic.yarnpkg.com/en/docs/cli/install

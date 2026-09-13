@@ -1,8 +1,7 @@
 {
   "name": "example-browser",
-  "version": "1.1.0",
   "description": "running Cypress using different browsers",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "npm run cy:run",
     "info": "cypress info",
@@ -13,7 +12,9 @@
   },
   "private": true,
   "devDependencies": {
-    "cypress": "14.5.3",
-    "image-size": "^1.0.2"
+    "cypress": "15.21.1"
+  },
+  "allowScripts": {
+    "cypress": true
   }
 }
