@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   check-record-key:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       record-key-exists: ${{ steps.record-key-check.outputs.defined }}
     steps:
@@ -43,7 +43,7 @@ jobs:
           fi
 
   parallel:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [check-record-key]
     strategy:
       fail-fast: false
@@ -54,7 +54,7 @@ jobs:
     # Use a Cypress Docker image with browsers pre-installed
     # to ensure that the tests run in the same consistent environment across each parallel run
     container:
-      image: cypress/browsers:24.20.0
+      image: cypress/browsers:24.22.0
       options: --user 1001
     steps:
       - name: Checkout
@@ -82,7 +82,7 @@ jobs:
           echo See results at ${{ steps.cypress.outputs.resultsUrl }}
 
   group:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [check-record-key]
     if: needs.check-record-key.outputs.record-key-exists == 'true'
     steps:

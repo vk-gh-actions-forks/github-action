@@ -22,7 +22,7 @@ jobs:
     # installs all dependencies,
     # then runs Cypress tests in the single workspace
     # of the subfolder "packages/workspace-1".
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     name: Single workspace
     steps:
       - name: Checkout repository
@@ -32,7 +32,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11
+          version: 12
 
         # See https://github.com/actions/setup-node
       - name: Install Node.js
@@ -68,7 +68,7 @@ jobs:
     # This job installs pnpm,
     # installs all dependencies,
     # then runs Cypress tests in each of the workspaces.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +84,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11
+          version: 12
 
       - name: Install Node.js
         uses: actions/setup-node@v7

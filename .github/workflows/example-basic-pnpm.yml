@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-24.04
+          - ubuntu-26.04
           - windows-2025
           - macos-26
     runs-on: ${{ matrix.os }}
@@ -26,7 +26,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11
+          version: 12
 
         # See https://github.com/actions/setup-node
       - name: Install Node.js
